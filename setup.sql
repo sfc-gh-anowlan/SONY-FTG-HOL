@@ -31,7 +31,7 @@ CREATE OR REPLACE NETWORK RULE slack_webhook_network_rule
 
 CREATE OR REPLACE SECRET slack_app_webhook_url
     type = GENERIC_STRING
-    secret_string = <'from slack'>
+    secret_string = <'secret string from slack'>
     comment = 'Slack Webhook URL to the anowlan sandbox for a demo';
 
 CREATE OR REPLACE PROCEDURE send_slack_message(MSG string)
@@ -86,7 +86,7 @@ CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
 /* Create the notification integration */
 CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications 
     TYPE = WEBHOOK ENABLED = TRUE 
-    WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+    WEBHOOK_URL = <'URL from slack'>
     WEBHOOK_SECRET = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.slack_app_webhook_url
     WEBHOOK_BODY_TEMPLATE='{
   "routing_key": "SNOWFLAKE_WEBHOOK_SECRET",
