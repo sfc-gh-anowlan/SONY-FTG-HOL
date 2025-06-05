@@ -31,7 +31,7 @@ CREATE OR REPLACE NETWORK RULE slack_webhook_network_rule
 
 CREATE OR REPLACE SECRET slack_app_webhook_url
     type = GENERIC_STRING
-    secret_string = 'https://hooks.slack.com/services/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'
+    secret_string = <'from slack'>
     comment = 'Slack Webhook URL to the anowlan sandbox for a demo';
 
 CREATE OR REPLACE PROCEDURE send_slack_message(MSG string)
