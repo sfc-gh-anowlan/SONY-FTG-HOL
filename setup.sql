@@ -106,8 +106,8 @@ CREATE NOTIFICATION INTEGRATION anowlan_sns_notify_int
   DIRECTION = OUTBOUND
   TYPE = QUEUE
   NOTIFICATION_PROVIDER = AWS_SNS
-  AWS_SNS_TOPIC_ARN = 'arn:aws:sns:us-west-2:484577546576:anowlan-snowpark-events'
-  AWS_SNS_ROLE_ARN = 'arn:aws:iam::484577546576:role/anowlan-sns-snowpark';
+  AWS_SNS_TOPIC_ARN = 'arn:aws:sns:....:topic-snowpark-events'
+  AWS_SNS_ROLE_ARN = 'arn:aws:iam::...:role/role-sns-snowpark';
 
 DESC NOTIFICATION INTEGRATION anowlan_sns_notify_int;
 
