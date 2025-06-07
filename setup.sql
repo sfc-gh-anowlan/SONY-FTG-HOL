@@ -215,6 +215,8 @@ CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
   ALLOWED_AUTHENTICATION_SECRETS = (slack_app_webhook_url)
   ENABLED = true;
 
+GRANT USAGE ON INTEGRATION slack_webhook_access_integration TO ROLE TASK_GRAPH_ROLE;
+
 --Create the notification integration 
 CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications 
       TYPE = WEBHOOK ENABLED = TRUE 
