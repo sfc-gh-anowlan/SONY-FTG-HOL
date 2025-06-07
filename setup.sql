@@ -140,6 +140,24 @@ $$;
 
 --OPTIONAL NOTIFIACTION TESTING--
 /*
+//AWS SNS integration 
+CREATE OR REPLACE NOTIFICATION INTEGRATION anowlan_sns_notify_int
+  ENABLED = TRUE
+  DIRECTION = OUTBOUND
+  TYPE = QUEUE
+  NOTIFICATION_PROVIDER = AWS_SNS
+  AWS_SNS_TOPIC_ARN = 'arn:aws:sns:....'
+  AWS_SNS_ROLE_ARN = 'arn:aws:iam::....';
+
+DESC NOTIFICATION INTEGRATION anowlan_sns_notify_int;
+
+-- Grant usage on the integration 
+GRANT USAGE ON INTEGRATION anowlan_sns_notify_int TO ROLE TASK_GRAPH_ROLE;
+
+*/
+
+
+/*
 --create a slack sproc
 CREATE OR REPLACE NETWORK RULE slack_webhook_network_rule
   MODE = EGRESS
@@ -153,89 +171,69 @@ CREATE OR REPLACE SECRET slack_app_webhook_url
     comment = 'Slack Webhook URL to the anowlan sandbox for a demo';
 
 CREATE OR REPLACE PROCEDURE send_slack_message(MSG string)
-RETURNS STRING
-LANGUAGE PYTHON
-RUNTIME_VERSION = 3.10
-HANDLER = 'main'
-EXTERNAL_ACCESS_INTEGRATIONS = (slack_webhook_access_integration)
-SECRETS = ('slack_url' = slack_app_webhook_url)
-PACKAGES = ('snowflake-snowpark-python', 'requests')
-EXECUTE AS CALLER
-AS
-$$
-import snowflake.snowpark as snowpark
-import json
-import requests
-import _snowflake
-from datetime import date
-
-def main(session, msg): 
-    # Retrieve the Webhook URL from the SECRET object
-    webhook_url = _snowflake.get_generic_secret_string('slack_url')
-
-    slack_data = {
-     "text": f"Snowflake says: {msg}"
-    }
-
-    response = requests.post(
-        webhook_url, data=json.dumps(slack_data),
-        headers={'Content-Type': 'application/json'}
-    )
-    if response.status_code != 200:
-        raise ValueError(
-            'Request to slack returned an error %s, the response is:\n%s'
-            % (response.status_code, response.text)
-        )
+    RETURNS STRING
+    LANGUAGE PYTHON
+    RUNTIME_VERSION = 3.10
+    HANDLER = 'main'
+    EXTERNAL_ACCESS_INTEGRATIONS = (slack_webhook_access_integration)
+    SECRETS = ('slack_url' = slack_app_webhook_url)
+    PACKAGES = ('snowflake-snowpark-python', 'requests')
+    EXECUTE AS CALLER
+    AS
+    $$
+    import snowflake.snowpark as snowpark
+    import json
+    import requests
+    import _snowflake
+    from datetime import date
     
-    return "SUCCESS"
-$$;
+    def main(session, msg): 
+        # Retrieve the Webhook URL from the SECRET object
+        webhook_url = _snowflake.get_generic_secret_string('slack_url')
+    
+        slack_data = {
+         "text": f"Snowflake says: {msg}"
+        }
+    
+        response = requests.post(
+            webhook_url, data=json.dumps(slack_data),
+            headers={'Content-Type': 'application/json'}
+        )
+        if response.status_code != 200:
+            raise ValueError(
+                'Request to slack returned an error %s, the response is:\n%s'
+                % (response.status_code, response.text)
+            )
+        
+        return "SUCCESS"
+    $$;
 
-
-//sns topic notifications
 USE ROLE ACCOUNTADMIN;
-
 
 CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
   ALLOWED_NETWORK_RULES = (slack_webhook_network_rule)
   ALLOWED_AUTHENTICATION_SECRETS = (slack_app_webhook_url)
   ENABLED = true;
 
-
-/* Create the notification integration */
+--Create the notification integration 
 CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications 
-    TYPE = WEBHOOK ENABLED = TRUE 
-    WEBHOOK_URL = ''
-    WEBHOOK_SECRET = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.slack_app_webhook_url
-    WEBHOOK_BODY_TEMPLATE='{
-  "routing_key": "SNOWFLAKE_WEBHOOK_SECRET",
-  "event_action": "trigger",
-  "payload":
-    {
-      "summary": "SNOWFLAKE_WEBHOOK_MESSAGE",
-      "source": "Snowflake monitoring",
-      "severity": "INFO",
-    }
-  }'
-WEBHOOK_HEADERS=('Content-Type'='application/json');
+      TYPE = WEBHOOK ENABLED = TRUE 
+      WEBHOOK_URL = ''
+      WEBHOOK_SECRET = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.slack_app_webhook_url
+      WEBHOOK_BODY_TEMPLATE='{
+    "routing_key": "SNOWFLAKE_WEBHOOK_SECRET",
+    "event_action": "trigger",
+    "payload":
+      {
+        "summary": "SNOWFLAKE_WEBHOOK_MESSAGE",
+        "source": "Snowflake monitoring",
+        "severity": "INFO",
+      }
+    }'
+  WEBHOOK_HEADERS=('Content-Type'='application/json');
 
-
-//AWS SNS integration 
-CREATE OR REPLACE NOTIFICATION INTEGRATION anowlan_sns_notify_int
-  ENABLED = TRUE
-  DIRECTION = OUTBOUND
-  TYPE = QUEUE
-  NOTIFICATION_PROVIDER = AWS_SNS
-  AWS_SNS_TOPIC_ARN = 'arn:aws:sns:....'
-  AWS_SNS_ROLE_ARN = 'arn:aws:iam::....';
-
-DESC NOTIFICATION INTEGRATION anowlan_sns_notify_int;
-
-
-/* Grant usage on the integration */
-GRANT USAGE ON INTEGRATION task_notifications TO ROLE TASK_GRAPH_ROLE;
-GRANT USAGE ON INTEGRATION anowlan_sns_notify_int TO ROLE TASK_GRAPH_ROLE;
-
-
-/* Grant usage on the integration */
-GRANT USAGE ON INTEGRATION task_notifications TO ROLE your_role;
+-- Grant usage on the integration 
+ GRANT USAGE ON INTEGRATION task_notifications TO ROLE TASK_GRAPH_ROLE;
 */
+
+
