@@ -61,26 +61,26 @@ CREATE OR REPLACE SECRET slack_app_webhook_url
     comment = 'Slack Webhook URL to the anowlan sandbox for a demo';
 
 CREATE OR REPLACE PROCEDURE send_slack_message(MSG string)
-    RETURNS STRING
-    LANGUAGE PYTHON
-    RUNTIME_VERSION = 3.10
-    HANDLER = 'main'
-    EXTERNAL_ACCESS_INTEGRATIONS = (slack_webhook_access_integration)
-    SECRETS = ('slack_url' = slack_app_webhook_url)
-    PACKAGES = ('snowflake-snowpark-python', 'requests')
-    EXECUTE AS CALLER
-    AS
-    $$
-    import snowflake.snowpark as snowpark
-    import json
-    import requests
-    import _snowflake
-    from datetime import date
-    
-    def main(session, msg): 
-        # Retrieve the Webhook URL from the SECRET object
-        webhook_url = _snowflake.get_generic_secret_string('slack_url')
-    
+RETURNS STRING
+LANGUAGE PYTHON
+RUNTIME_VERSION = 3.10
+HANDLER = 'main'
+EXTERNAL_ACCESS_INTEGRATIONS = (slack_webhook_access_integration)
+SECRETS = ('slack_url' = slack_app_webhook_url)
+PACKAGES = ('snowflake-snowpark-python', 'requests')
+EXECUTE AS CALLER
+AS
+$$
+import snowflake.snowpark as snowpark
+import json
+import requests
+import _snowflake
+from datetime import date
+
+def main(session, msg): 
+    # Retrieve the Webhook URL from the SECRET object
+    webhook_url = _snowflake.get_generic_secret_string('slack_url')
+
     slack_data = {
      "text": f"Task Graph Lab: {msg}"
     }
@@ -98,13 +98,14 @@ CREATE OR REPLACE PROCEDURE send_slack_message(MSG string)
     return "SUCCESS"
 $$;
 
-
 USE ROLE ACCOUNTADMIN;
 
 CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
   ALLOWED_NETWORK_RULES = (slack_webhook_network_rule)
   ALLOWED_AUTHENTICATION_SECRETS = (slack_app_webhook_url)
   ENABLED = true;
+
+GRANT USAGE ON INTEGRATION slack_webhook_access_integration TO ROLE TASK_GRAPH_ROLE;
 
 --Create the notification integration 
 CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications 
