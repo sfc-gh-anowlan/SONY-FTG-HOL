@@ -8,6 +8,6 @@ Part 1: Setup task graph and monitor for issues:
 
 Part 2: Correct the Task Graph and confirm clean run without errors
 
-Part 3: Dynamic Tables testing and monitoring with Streamlit
+Part 3: Dynamic Tables testing, monitor w/ Streamlit and Alert on low inventory
 
 Part 4: 
