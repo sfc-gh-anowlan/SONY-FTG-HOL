@@ -237,5 +237,3 @@ CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications
 -- Grant usage on the integration 
  GRANT USAGE ON INTEGRATION task_notifications TO ROLE TASK_GRAPH_ROLE;
 */
-
-
