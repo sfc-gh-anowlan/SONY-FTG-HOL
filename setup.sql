@@ -2,7 +2,7 @@ USE ROLE ACCOUNTADMIN;
   
 -- Using ACCOUNTADMIN, create a new role for this exercise and grant to applicable users
 CREATE OR REPLACE ROLE TASK_GRAPH_ROLE;
-GRANT ROLE TASK_GRAPH_ROLE to USER ANOWLAN;
+GRANT ROLE TASK_GRAPH_ROLE to USER <CURRENT_USER>;
 GRANT EXECUTE TASK ON ACCOUNT TO ROLE TASK_GRAPH_ROLE;
 GRANT EXECUTE MANAGED TASK ON ACCOUNT TO ROLE TASK_GRAPH_ROLE;
 GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE TASK_GRAPH_ROLE;
@@ -23,8 +23,10 @@ GRANT OWNERSHIP ON ALL SCHEMAS IN DATABASE TASK_GRAPH_DATABASE TO ROLE TASK_GRAP
 
 
 --set event table at the database object
-ALTER DATABASE TASK_GRAPH_DATABASE SET EVENT_TABLE = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.events_in_task_graph;
-ALTER ACCOUNT SET EVENT_TABLE = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.events_in_task_graph;
+USE ROLE TASK_GRAPH_ROLE;
+CREATE EVENT TABLE TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.event_table_task_graph;
+ALTER DATABASE TASK_GRAPH_DATABASE SET EVENT_TABLE = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.event_table_task_graph;
+ALTER ACCOUNT SET EVENT_TABLE = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.event_table_task_graph;
 
 -- function to generate customer test data 
 create or replace function gen_cust_info(num_records number)
@@ -137,6 +139,7 @@ $$;
 
 
 --OPTIONAL NOTIFIACTION TESTING--
+/*
 --create a slack sproc
 CREATE OR REPLACE NETWORK RULE slack_webhook_network_rule
   MODE = EGRESS
@@ -146,7 +149,7 @@ CREATE OR REPLACE NETWORK RULE slack_webhook_network_rule
 
 CREATE OR REPLACE SECRET slack_app_webhook_url
     type = GENERIC_STRING
-    secret_string = <'secret string from slack'>
+    secret_string = ''
     comment = 'Slack Webhook URL to the anowlan sandbox for a demo';
 
 CREATE OR REPLACE PROCEDURE send_slack_message(MSG string)
@@ -201,7 +204,7 @@ CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
 /* Create the notification integration */
 CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications 
     TYPE = WEBHOOK ENABLED = TRUE 
-    WEBHOOK_URL = <'URL from slack'>
+    WEBHOOK_URL = ''
     WEBHOOK_SECRET = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.slack_app_webhook_url
     WEBHOOK_BODY_TEMPLATE='{
   "routing_key": "SNOWFLAKE_WEBHOOK_SECRET",
@@ -216,16 +219,23 @@ CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications
 WEBHOOK_HEADERS=('Content-Type'='application/json');
 
 
-CREATE NOTIFICATION INTEGRATION anowlan_sns_notify_int
+//AWS SNS integration 
+CREATE OR REPLACE NOTIFICATION INTEGRATION anowlan_sns_notify_int
   ENABLED = TRUE
   DIRECTION = OUTBOUND
   TYPE = QUEUE
   NOTIFICATION_PROVIDER = AWS_SNS
-  AWS_SNS_TOPIC_ARN = 'arn:aws:sns:....:topic-snowpark-events'
-  AWS_SNS_ROLE_ARN = 'arn:aws:iam::...:role/role-sns-snowpark';
+  AWS_SNS_TOPIC_ARN = 'arn:aws:sns:....'
+  AWS_SNS_ROLE_ARN = 'arn:aws:iam::....';
 
 DESC NOTIFICATION INTEGRATION anowlan_sns_notify_int;
 
 
 /* Grant usage on the integration */
+GRANT USAGE ON INTEGRATION task_notifications TO ROLE TASK_GRAPH_ROLE;
+GRANT USAGE ON INTEGRATION anowlan_sns_notify_int TO ROLE TASK_GRAPH_ROLE;
+
+
+/* Grant usage on the integration */
 GRANT USAGE ON INTEGRATION task_notifications TO ROLE your_role;
+*/
