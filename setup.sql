@@ -1,6 +1,5 @@
 USE ROLE ACCOUNTADMIN;
 
-  
 -- Using ACCOUNTADMIN, create a new role for this exercise and grant to applicable users
 CREATE ROLE TASK_GRAPH_ROLE;
 set myname = current_user();
