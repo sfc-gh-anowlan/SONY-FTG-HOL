@@ -46,16 +46,19 @@ CREATE IF NOT EXISTS NOTIFICATION INTEGRATION my_sns_notify_int
   NOTIFICATION_PROVIDER = AWS_SNS
   AWS_SNS_TOPIC_ARN = 'arn:aws:sns:....'
   AWS_SNS_ROLE_ARN = 'arn:aws:iam::....';
+*/
 
+/*
+--if the integration already exists
 DESC NOTIFICATION INTEGRATION my_sns_notify_int;
 
 -- Grant usage on the integration 
 GRANT USAGE ON INTEGRATION my_sns_notify_int TO ROLE TASK_GRAPH_ROLE;
 --monitor the notification history
 SELECT count(*) FROM TABLE(INFORMATION_SCHEMA.NOTIFICATION_HISTORY()) WHERE INTEGRATION_NAME='MY_SNS_NOTIFY_INT' ORDER BY PROCESSED DESC Limit 5;
-
-
 */
+
+
 
 
 /*
@@ -69,8 +72,8 @@ CREATE OR REPLACE NETWORK RULE slack_webhook_network_rule
 
 CREATE OR REPLACE SECRET slack_app_webhook_url
     type = GENERIC_STRING
-    secret_string = ''
-    comment = 'Slack Webhook URL to the anowlan sandbox for a demo';
+    secret_string = <'your slack webhook'>
+    comment = 'Slack Webhook URL';
 
 CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
   ALLOWED_NETWORK_RULES = (slack_webhook_network_rule)
