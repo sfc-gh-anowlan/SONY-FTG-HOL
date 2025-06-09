@@ -60,17 +60,24 @@ SELECT count(*) FROM TABLE(INFORMATION_SCHEMA.NOTIFICATION_HISTORY()) WHERE INTE
 
 /*
 --create a slack sproc
+USE ROLE TASK_GRAPH_ROLE;
+
 CREATE OR REPLACE NETWORK RULE slack_webhook_network_rule
   MODE = EGRESS
   TYPE = HOST_PORT
   VALUE_LIST = ('hooks.slack.com');
-
 
 CREATE OR REPLACE SECRET slack_app_webhook_url
     type = GENERIC_STRING
     secret_string = ''
     comment = 'Slack Webhook URL to the anowlan sandbox for a demo';
 
+CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
+  ALLOWED_NETWORK_RULES = (slack_webhook_network_rule)
+  ALLOWED_AUTHENTICATION_SECRETS = (slack_app_webhook_url)
+  ENABLED = true;
+
+GRANT USAGE ON INTEGRATION slack_webhook_access_integration TO ROLE TASK_GRAPH_ROLE;
 CREATE OR REPLACE PROCEDURE send_slack_message(MSG string)
 RETURNS STRING
 LANGUAGE PYTHON
@@ -109,32 +116,4 @@ def main(session, msg):
     return "SUCCESS"
 $$;
 
-USE ROLE ACCOUNTADMIN;
-
-CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION slack_webhook_access_integration
-  ALLOWED_NETWORK_RULES = (slack_webhook_network_rule)
-  ALLOWED_AUTHENTICATION_SECRETS = (slack_app_webhook_url)
-  ENABLED = true;
-
-GRANT USAGE ON INTEGRATION slack_webhook_access_integration TO ROLE TASK_GRAPH_ROLE;
-
---Create the notification integration 
-CREATE OR REPLACE NOTIFICATION INTEGRATION task_notifications 
-      TYPE = WEBHOOK ENABLED = TRUE 
-      WEBHOOK_URL = ''
-      WEBHOOK_SECRET = TASK_GRAPH_DATABASE.TASK_GRAPH_SCHEMA.slack_app_webhook_url
-      WEBHOOK_BODY_TEMPLATE='{
-    "routing_key": "SNOWFLAKE_WEBHOOK_SECRET",
-    "event_action": "trigger",
-    "payload":
-      {
-        "summary": "SNOWFLAKE_WEBHOOK_MESSAGE",
-        "source": "Snowflake monitoring",
-        "severity": "INFO",
-      }
-    }'
-  WEBHOOK_HEADERS=('Content-Type'='application/json');
-
--- Grant usage on the integration 
- GRANT USAGE ON INTEGRATION task_notifications TO ROLE TASK_GRAPH_ROLE;
 */
