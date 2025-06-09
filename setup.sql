@@ -3,7 +3,9 @@ USE ROLE ACCOUNTADMIN;
   
 -- Using ACCOUNTADMIN, create a new role for this exercise and grant to applicable users
 CREATE ROLE TASK_GRAPH_ROLE;
-GRANT ROLE TASK_GRAPH_ROLE to USER ANOWLAN;
+set myname = current_user();
+grant role TASK_GRAPH_ROLE to user identifier($myname);
+
 --account level priv
 GRANT EXECUTE TASK ON ACCOUNT TO ROLE TASK_GRAPH_ROLE;
 GRANT EXECUTE MANAGED TASK ON ACCOUNT TO ROLE TASK_GRAPH_ROLE;
